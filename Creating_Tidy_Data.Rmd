@@ -1,0 +1,209 @@
+---
+title: "Youth Risk Behavior Analysis"
+author: "YOUR NAME"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, comment = "")
+library(tidyverse)
+library(janitor)
+```
+
+## Youth Risk Behavior Surveillance Systems (YRBSS)
+
+This data is from a survey given every other year called the Youth Risk Behavior Surveillance System administered by the Center for Disease Control and Prevention. The survey monitors health risks among youth, such as violence, sexually transmitted diseases, tobacco, and alcohol use. 
+
+The dataset contains over 100,000 rows from 2003 to 2015.  A codebook is also provided that gives extensive information on the survey. The data can be stored in an Excel or spreadsheet program, but it cannot be manipulated in those programs because of its size - this why we need R.
+
+
+### Importing the Data
+Let's read in the data. The data use "NA" as the missing data option - fix the code to recognize this by replacing the _______.  After you load the data, notice the messages and warnings provided:
+```{r}
+youth <- read_csv("data/YRBS2015.csv", na = "___")
+#you can click the X on the output in the right-hand corner to get rid of the output once you've looked at it
+#spec(youth) let's you look at all defaults
+```
+
+
+You can look at some of the problems with this code:
+```{r}
+problems(youth)
+```
+
+
+We won't clean all of the columns, but just a few specific ones.
+
+For example, here are the `distinct` values in the Age Category
+```{r}
+youth %>% 
+  distinct(AgeCat)
+```
+
+and for the Grade 
+```{r}
+youth %>% 
+  distinct(Grade)
+```
+
+We want to strip out just the numbers for these two variables.  Other variables for some reason are being treated as "logical" types (TRUE/FALSE).  The other columns not listed we want to skip
+
+
+```{r}
+youth <- read_csv("data/YRBS2015.csv", na = "_____",
+                  col_types = cols(
+                    .default = col_________(),  #set default to skip any columns we don't specify
+                    Year = col_double(),
+                    `Analysis weight` = col_double(),
+                    `Record ID` = col_double(),
+                    AgeCat = col_______(),  #make a number to remove "years old"
+                    Gender = col_character(),
+                    Grade = col_________(),  #make a number to remove 'th grade
+                    Race4 = col_character(),
+                    `Height in meters` = col_double(),
+                    `Weight in kilograms` = col_double(),
+                    `Body Mass Index` = col_double(),
+                    `BMI percentile` = col_double(),
+                    `Perception of weight` = col_character(),
+                    `Weight loss` = col_character(),
+                    `Fruit eating` = col_character(),
+                    `Salad eating` = col_character(),
+                    `Other vegetable eating` = col_character(),
+                    `Soda drinking` = col________(), #make character
+                    `How many glass of milk 7 days` = col_character(),
+                    `Breakfast eating` = col__________(), #make character
+                    `Physical activity >= 5 days` = col_______(), #make character
+                    `Television watching` = col_character(),
+                    `Computer use` = col_character(),
+                    `Sports team participation` = col_character(),
+                    Asthma = col_character(),
+                    `Hours of sleep on school night` = col_character(),
+                    `Grades in school` = col_character(),
+                    `Difficulty concentrating` = col_character() 
+                  ))
+
+spec(youth)
+```
+
+
+Let's try to clean up our variable names using `janitor`
+
+```{r}
+youth <- janitor::clean_names(youth)
+```
+
+Now, let's take a new look at the data, notice we are focusing on the variables related to nutrition and health:
+```{r}
+glimpse(youth)
+```
+
+Now that the data is clean(ish), we can write the data to a new csv file:
+```{r}
+youth %>% 
+  _________("data/yrbs_health_only.csv")
+```
+
+Now that we have our clean data saved, we will not want to run the above code again and again, add in the command `eval = FALSE` to the all code chunks above so they do not run when you knit the document.
+
+
+### Pivoting the Data Wider
+First, let's read in our new data
+```{r}
+new_youth <- read_csv("data/yrbs_health_only.csv",
+                      col_types = cols(
+                        soda_drinking = col_character(),
+                        breakfast_eating = col_character(),
+                        physical_activity_5_days = col_character(),
+                        hours_of_sleep_on_school_night = col_character(),
+                        difficulty_concentrating = col_character()
+                      )) 
+#spec(new_youth) #check that all variables were read in correctly
+```
+
+
+We want to make the following table to compare perception of weight among grade and gender as recorded.  
+
+- Column for Gender  
+- Column for Grade Level  
+- Columns for each category of Perception of Weight  
+    - with Proportion of gender by grade with that perception
+
+Replace the ________ with the write function verbs or write a comment to describe what the code is doing where indicated:
+```{r}
+new_youth %>% 
+  _______(gender, grade, perception_of_weight) %>%  #drop the missing data
+  _______(gender, grade, perception_of_weight) %>% #count individuals in these groups
+  _______(gender, grade) %>% #group the values together
+  _______(total = sum(n),    
+         proportion = round(n/total, 4)) %>% #create new variables "total" and "proportion"
+  _______(gender, grade, perception_of_weight, proportion) %>% #choose only these columns
+  pivot_______(______from = perception_of_weight, 
+              ______from = proportion) %>% #make our date wider with column titles as the perception and the values as the proportion
+  relocate(contains("under"), .before = 'About the right weight') %>% #_______
+  relocate('Very underweight', .after = grade) #______
+```
+
+Describe the trends in the table created:  
+
+> Insert Answer Here 
+
+
+
+
+## General Social Survey
+The [General Social Survey](https://gssdataexplorer.norc.org/) is conducted every year and collects data on a variety of social issues.  We will explore one on perception of provision for childcare.
+
+On the survey, people are asked to respond to the following question:
+
+>We are faced with many problems in this country, none of which can be solved easily or inexpensively. I'm going to name some of these problems, and for each one I'd like you to name some of these problems, and for each one I'd like you to tell me whether you think we're spending too much money on it, too little money, or about the right amount. Are we spending too much, too little, or about the right amount on **assistance for childcare**?
+
+
+The data we get from their website, is in the form of a table:
+
+```{r}
+child <- read_csv("data/childcare.csv")
+```
+
+
+Do we need to do any further modifications to our importing code above? Explain your answer.
+
+> Insert Answer Here
+
+
+### Pivoting the Data Longer
+We want to restructure the data so we can plot trends in response over time such that `year` is its own variable with the cell values in a column called `count`.  Assign the results to the object name `new_child`
+
+```{r}
+child %>% 
+  pivot_______(cols = ______, names_to = ________, values_to = ______) 
+```
+
+Now we can use that data to create visualization of views over time. Provide the right data verbs where missing or fill in other missing values where you see a blank ___________.
+
+
+```{r}
+new_child %>% 
+  _______(Label %in% c("Too little", "About right","Too much")) %>% #pull out just the responses listed
+  mutate(Label = factor(Label, levels = c("Too little", "About right","Too much"))) %>%  #_______________
+  __________(year) %>%  #group together values by year 
+  __________(total = sum(count),
+             prop = round(count/total,4)) %>%  ## create two new variables, total and prop to calculate the proportion of responses by year
+  ggplot(aes(x = year, y = prop, group = Label)) +  #___________
+  geom_line(aes(color = Label), size = 1.1) +
+  labs(x = "______________",
+       y = "_______________",
+       title = "Perception of Spending on Assistance for Childcare") +
+  theme_minimal() #feel free to add other modifications
+```
+
+Describe the trends in the graph created:  
+
+> Insert Answer Here  
+
+
+### Further Practice
+Try exploring some of the other variables in the Youth Risk Data or download other data from the General Social Survey to generate figures and tables of summarized data.
+
+
+
+
