@@ -1,7 +1,7 @@
 ---
 title: "Youth Risk Behavior Analysis"
-author: "YOUR NAME"
-output: html_document
+author: "Juan Ramirez"
+output: github_document
 ---
 
 ```{r setup, include=FALSE}
@@ -19,15 +19,15 @@ The dataset contains over 100,000 rows from 2003 to 2015.  A codebook is also pr
 
 ### Importing the Data
 Let's read in the data. The data use "NA" as the missing data option - fix the code to recognize this by replacing the _______.  After you load the data, notice the messages and warnings provided:
-```{r}
-youth <- read_csv("data/YRBS2015.csv", na = "___")
+```{r, eval = FALSE}
+youth <- read_csv("data/YRBS2015.csv", na = "NA")
 #you can click the X on the output in the right-hand corner to get rid of the output once you've looked at it
 #spec(youth) let's you look at all defaults
 ```
 
 
 You can look at some of the problems with this code:
-```{r}
+```{r, eval = FALSE}
 problems(youth)
 ```
 
@@ -35,13 +35,13 @@ problems(youth)
 We won't clean all of the columns, but just a few specific ones.
 
 For example, here are the `distinct` values in the Age Category
-```{r}
+```{r, eval = FALSE}
 youth %>% 
   distinct(AgeCat)
 ```
 
 and for the Grade 
-```{r}
+```{r, eval = FALSE}
 youth %>% 
   distinct(Grade)
 ```
@@ -49,16 +49,16 @@ youth %>%
 We want to strip out just the numbers for these two variables.  Other variables for some reason are being treated as "logical" types (TRUE/FALSE).  The other columns not listed we want to skip
 
 
-```{r}
-youth <- read_csv("data/YRBS2015.csv", na = "_____",
+```{r, eval = FALSE}
+youth <- read_csv("data/YRBS2015.csv", na = "NA",
                   col_types = cols(
-                    .default = col_________(),  #set default to skip any columns we don't specify
+                    .default = col_skip(),  #set default to skip any columns we don't specify
                     Year = col_double(),
                     `Analysis weight` = col_double(),
                     `Record ID` = col_double(),
-                    AgeCat = col_______(),  #make a number to remove "years old"
+                    AgeCat = col_number(),  #make a number to remove "years old"
                     Gender = col_character(),
-                    Grade = col_________(),  #make a number to remove 'th grade
+                    Grade = col_number(),  #make a number to remove 'th grade
                     Race4 = col_character(),
                     `Height in meters` = col_double(),
                     `Weight in kilograms` = col_double(),
@@ -69,10 +69,10 @@ youth <- read_csv("data/YRBS2015.csv", na = "_____",
                     `Fruit eating` = col_character(),
                     `Salad eating` = col_character(),
                     `Other vegetable eating` = col_character(),
-                    `Soda drinking` = col________(), #make character
+                    `Soda drinking` = col_character(), #make character
                     `How many glass of milk 7 days` = col_character(),
-                    `Breakfast eating` = col__________(), #make character
-                    `Physical activity >= 5 days` = col_______(), #make character
+                    `Breakfast eating` = col_character(), #make character
+                    `Physical activity >= 5 days` = col_character(), #make character
                     `Television watching` = col_character(),
                     `Computer use` = col_character(),
                     `Sports team participation` = col_character(),
@@ -88,19 +88,19 @@ spec(youth)
 
 Let's try to clean up our variable names using `janitor`
 
-```{r}
+```{r, eval = FALSE}
 youth <- janitor::clean_names(youth)
 ```
 
 Now, let's take a new look at the data, notice we are focusing on the variables related to nutrition and health:
-```{r}
+```{r, eval = FALSE}
 glimpse(youth)
 ```
 
 Now that the data is clean(ish), we can write the data to a new csv file:
-```{r}
+```{r, eval = FALSE}
 youth %>% 
-  _________("data/yrbs_health_only.csv")
+  write_csv("data/yrbs_health_only.csv")
 ```
 
 Now that we have our clean data saved, we will not want to run the above code again and again, add in the command `eval = FALSE` to the all code chunks above so they do not run when you knit the document.
@@ -131,21 +131,21 @@ We want to make the following table to compare perception of weight among grade 
 Replace the ________ with the write function verbs or write a comment to describe what the code is doing where indicated:
 ```{r}
 new_youth %>% 
-  _______(gender, grade, perception_of_weight) %>%  #drop the missing data
-  _______(gender, grade, perception_of_weight) %>% #count individuals in these groups
-  _______(gender, grade) %>% #group the values together
-  _______(total = sum(n),    
+  drop_na(gender, grade, perception_of_weight) %>%  #drop the missing data
+  count(gender, grade, perception_of_weight) %>% #count individuals in these groups
+  group_by(gender, grade) %>% #group the values together
+  mutate(total = sum(n),    
          proportion = round(n/total, 4)) %>% #create new variables "total" and "proportion"
-  _______(gender, grade, perception_of_weight, proportion) %>% #choose only these columns
-  pivot_______(______from = perception_of_weight, 
-              ______from = proportion) %>% #make our date wider with column titles as the perception and the values as the proportion
-  relocate(contains("under"), .before = 'About the right weight') %>% #_______
-  relocate('Very underweight', .after = grade) #______
+  select(gender, grade, perception_of_weight, proportion) %>% #choose only these columns
+  pivot_wider(names_from = perception_of_weight, 
+              values_from = proportion) %>% #make our date wider with column titles as the perception and the values as the proportion
+  relocate(contains("under"), .before = 'About the right weight') %>% #Move all columns containing the word "under" before "about the right weight"
+  relocate('Very underweight', .after = grade) #Move fields containing "very underweight" after the "grade" column
 ```
 
 Describe the trends in the table created:  
 
-> Insert Answer Here 
+> Female youth are more likely to be underweight than male youth.
 
 
 
@@ -161,21 +161,21 @@ On the survey, people are asked to respond to the following question:
 The data we get from their website, is in the form of a table:
 
 ```{r}
-child <- read_csv("data/childcare.csv")
+new_child <- read_csv("data/childcare.csv")
 ```
 
 
 Do we need to do any further modifications to our importing code above? Explain your answer.
 
-> Insert Answer Here
+> Yes, we need to change "child" to "new_child."
 
 
 ### Pivoting the Data Longer
 We want to restructure the data so we can plot trends in response over time such that `year` is its own variable with the cell values in a column called `count`.  Assign the results to the object name `new_child`
 
 ```{r}
-child %>% 
-  pivot_______(cols = ______, names_to = ________, values_to = ______) 
+new_child %>% 
+  pivot_longer(cols = 2:11, names_to = "year", values_to = "count") 
 ```
 
 Now we can use that data to create visualization of views over time. Provide the right data verbs where missing or fill in other missing values where you see a blank ___________.
@@ -183,22 +183,23 @@ Now we can use that data to create visualization of views over time. Provide the
 
 ```{r}
 new_child %>% 
-  _______(Label %in% c("Too little", "About right","Too much")) %>% #pull out just the responses listed
-  mutate(Label = factor(Label, levels = c("Too little", "About right","Too much"))) %>%  #_______________
-  __________(year) %>%  #group together values by year 
-  __________(total = sum(count),
+  pivot_longer(cols = 2:11, names_to = "year", values_to = "count") %>% 
+  filter(Label %in% c("Too little", "About right","Too much")) %>% #pull out just the responses listed
+  mutate(Label = factor(Label, levels = c("Too little", "About right","Too much"))) %>%  #Categorize "too little", "about right", and "too much" into a vector
+  group_by(year) %>%  #group together values by year 
+  mutate(total = sum(count),
              prop = round(count/total,4)) %>%  ## create two new variables, total and prop to calculate the proportion of responses by year
-  ggplot(aes(x = year, y = prop, group = Label)) +  #___________
+  ggplot(aes(x = year, y = prop, group = Label)) +  #Plot the relationship between the "year" and "prop" attributes
   geom_line(aes(color = Label), size = 1.1) +
-  labs(x = "______________",
-       y = "_______________",
+  labs(x = "Year",
+       y = "Average Proposed Amount",
        title = "Perception of Spending on Assistance for Childcare") +
   theme_minimal() #feel free to add other modifications
 ```
 
 Describe the trends in the graph created:  
 
-> Insert Answer Here  
+> In 2012, the majority shared a feeling that the proposed spending amount was either "about right" or "too much." 
 
 
 ### Further Practice
